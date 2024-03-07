@@ -7,10 +7,10 @@ class CustomUser(AbstractUser):
     is_professor = models.BooleanField(default=False)
 
 class Project(models.Model):
-    creator = models.ForeignKey(AbstractUser, on_delete=models.CASCADE, related_name='created_projects', null=True)
-    collaborators = models.ManyToManyField(AbstractUser, related_name='collaborating_projects', blank=True)
+    creator = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='created_projects', null=True)
+    collaborators = models.ManyToManyField(CustomUser, related_name='collaborating_projects', blank=True)
     name = models.CharField(max_length=30)
-    teachers = models.ManyToManyField(AbstractUser, related_name='observed_projects', blank=True)
+    teachers = models.ManyToManyField(CustomUser, related_name='observed_projects', blank=True)
 
 class Task(models.Model):
     CHOICES = [
@@ -21,8 +21,8 @@ class Task(models.Model):
     ]
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks', null=True)
-    creator = models.ForeignKey(AbstractUser, on_delete=models.CASCADE, related_name='created_tasks', null=True)
-    collaborators = models.ManyToManyField(AbstractUser, related_name='collaborating_tasks', blank=True)
+    creator = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='created_tasks', null=True)
+    collaborators = models.ManyToManyField(CustomUser, related_name='collaborating_tasks', blank=True)
     name = models.CharField(max_length=30)
     start_date = models.DateField()
     finish_date = models.DateField()
