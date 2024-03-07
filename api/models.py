@@ -10,7 +10,7 @@ class Project(models.Model):
     creator = models.ForeignKey(AbstractUser, on_delete=models.CASCADE, related_name='created_projects', null=True)
     collaborators = models.ManyToManyField(AbstractUser, related_name='collaborating_projects', blank=True)
     name = models.CharField(max_length=30)
-    teachers = models.ManyToManyField(AbstractUser, on_delete=models.CASCADE, related_name='observed_projects', null=True)
+    teachers = models.ManyToManyField(AbstractUser, related_name='observed_projects', blank=True)
 
 class Task(models.Model):
     CHOICES = [
