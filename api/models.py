@@ -1,20 +1,25 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractBaseUser, Group, Permission, User
 
 # Create your models here.
 
-class CustomUser(AbstractUser):
-    is_professor = models.BooleanField(default=False)
+class CustomUser(AbstractBaseUser):
 
+    is_professor = models.BooleanField(default=False)
+    
     def get_project_SP(self, p_id):
         return self.points.filter(project_id=p_id)
 
     def save_poinst(self, p_id, pnts):
         p = self.points.filter(project_id=p_id)
         if p:
-            p += pnts
-        points = PointsProject(user=self, project_id=p_id, points=pnts)
-        points.save()
+            p.points += pnts
+            p.save()
+        else:
+            points = PointsProject(user=self, project_id=p_id, points=pnts)
+            points.save()
+    
+    
 
 class Project(models.Model):
     creator = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='created_projects', null=True)
@@ -45,7 +50,7 @@ class Task(models.Model):
 
     def update_points(self):
         points_per_usr = self.points / self.collaborators.count()
-        for collaborator in self.collaborator:
+        for collaborator in self.collaborators:
             collaborator.save_points(self.project.id, points_per_usr)
 
 class PointsProject(models.Model):
