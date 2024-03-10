@@ -88,12 +88,12 @@ class TasksView(APIView):
      def put(self, request, pk, format=None):
           task = get_object_or_404(Task, pk=pk)
           user = CustomUser.objects.get(user=request.user)
-          if user not in task.project.collaborators:
+          if user not in task.project.collaborators.all():
                return Response({"message": "Can't change a task if you are not a collaborator!"}, status=status.HTTP_400_BAD_REQUEST)
           serializer = TaskSerializer(instance=task, data=request.data, partial=True)
           if serializer.is_valid():
                tsk = serializer.save()
-               if tsk.status == 'DE':
+               if tsk.state == 'DE':
                     tsk.update_points()
                return Response(serializer.data, status=status.HTTP_200_OK)
           return Response(serializer.errors, status=status.HTTP_404_BAD_REQUEST)
@@ -140,4 +140,4 @@ class LogoutView(APIView):
                token.blacklist()
                return Response(status=status.HTTP_205_RESET_CONTENT)
           except Exception as e:
-               return Response(status=status.HTTP_400_BAD_REQUEST)
+               return Response({"error": str(e)},status=status.HTTP_400_BAD_REQUEST)

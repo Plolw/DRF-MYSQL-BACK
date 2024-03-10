@@ -48,8 +48,11 @@ class Task(models.Model):
     total_hours = models.FloatField(default=0)
 
     def update_points(self):
-        points_per_usr = self.points / self.collaborators.count()
-        for collaborator in self.collaborators:
+        if self.collaborators.count() < 1:
+            points_per_usr = self.story_points
+        else:
+            points_per_usr = self.story_points / self.collaborators.count()
+        for collaborator in self.collaborators.all():
             collaborator.save_points(self.project.id, points_per_usr)
 
 class PointsProject(models.Model):
