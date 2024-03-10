@@ -1,10 +1,10 @@
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, Group, Permission, User
+from django.contrib.auth.models import User
 
 # Create your models here.
 
-class CustomUser(AbstractBaseUser):
-
+class CustomUser(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='custom_user', null=True)
     is_professor = models.BooleanField(default=False)
     
     def get_project_SP(self, p_id):
@@ -20,7 +20,6 @@ class CustomUser(AbstractBaseUser):
             points.save()
     
     
-
 class Project(models.Model):
     creator = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='created_projects', null=True)
     collaborators = models.ManyToManyField(CustomUser, related_name='collaborating_projects', blank=True)
@@ -46,7 +45,7 @@ class Task(models.Model):
     story_points = models.IntegerField()
     state = models.CharField(max_length=20, choices=CHOICES)#
     estimated_hours = models.FloatField()
-    total_hours = models.FloatField()
+    total_hours = models.FloatField(default=0)
 
     def update_points(self):
         points_per_usr = self.points / self.collaborators.count()
