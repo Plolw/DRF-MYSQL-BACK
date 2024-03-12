@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Project, Task, CustomUser, PointsProject
+from .models import Project, Task, CustomUser, PointsProject, Invitation
 from django.contrib.auth.models import User
 
 
@@ -40,3 +40,11 @@ class PointsProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = PointsProject
         fields = ['username', 'project_id', 'points']
+
+class InvitationSerializer(serializers.ModelSerializer):
+    sender = CustomUserSerializer(required=False)
+    receiver = CustomUserSerializer(required=False)
+
+    class Meta:
+        model = Invitation
+        field = ['sender', 'receiver', 'state']

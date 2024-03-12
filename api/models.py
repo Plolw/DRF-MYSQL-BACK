@@ -64,3 +64,14 @@ class PointsProject(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='story_points', null=True)
     project_id = models.IntegerField()
     points = models.FloatField()
+
+class Invitation(models.Model):
+    CHOICES = [
+        ('AC', 'Accepted'),
+        ('WA', 'Waiting'),
+        ('DE', 'Denied')
+    ]
+
+    sender = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='s_invitations')
+    receiver = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='r_invitations')
+    state = models.CharField(max_length=20, choices=CHOICES, default='WA')

@@ -3,8 +3,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import CustomUser, Project, Task, PointsProject
-from .serializers import UserSerializer, ProjectSerializer, TaskSerializer, PointsProjectSerializer
+from .models import CustomUser, Project, Task, PointsProject, Invitation
+from .serializers import UserSerializer, ProjectSerializer, TaskSerializer, PointsProjectSerializer, InvitationSerializer
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
@@ -94,9 +94,7 @@ class TasksView(APIView):
           serializer = TaskSerializer(instance=task, data=request.data, partial=True)
           if serializer.is_valid():
                tsk = serializer.save()
-               print(tsk.finish_date)
                if tsk.state == 'DE' and tsk.finish_date == date(2000, 1, 1):
-                    print("Updating...")
                     tsk.update_points()
                     tsk.finish_date = date.today()
                     tsk.save()
@@ -117,7 +115,8 @@ class TaskCollaboratorsView(APIView):
             return Response({"error": "Task not found"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
+        
+#Points management
 class ProjectUsersPoints(APIView):
      def get(self, request, pk, format=None):
           pj = get_object_or_404(Project, pk=pk)
@@ -128,6 +127,29 @@ class ProjectUsersPoints(APIView):
           serializer = PointsProjectSerializer(points, many=True)
           return Response(serializer.data, status=status.HTTP_200_OK)
      
+#Invites
+class InvitesView(APIView):
+     def get(self, request, format=None):
+          user = CustomUser.objects.get(user=request.user)
+          invites = Invitation.objects.filter(receiver=user).all()
+          serializer = InvitationSerializer(invites, many=True)
+          return Response(serializer.data, status=status.HTTP_200_OK)
+     
+     def post(self, request, format=None):
+          user = CustomUser.objects.get(user=request.user)
+          receiverUser =  User.objects.get(email=request.data['email'])
+          receiver = CustomUser.objects.get(user=receiverUser)
+          invitation = Invitation(sender=user, receiver=receiver)
+          serializer = InvitationSerializer(invitation)
+          return Response(serializer.data, status=status.HTTP_201_CREATED)
+     
+     def put(self, request, pk, format=None):
+          invitation = get_object_or_404(Invitation, pk=pk)
+          serializer = InvitationSerializer(instance=invitation, data=request.data, partial=True)
+          if serializer.is_valid():
+               serializer.save()
+               return Response(serializer.data, status=status.HTTP_200_OK)
+          return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 #User auth
 class RegisterView(APIView):
