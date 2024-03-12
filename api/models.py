@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404
 
 # Create your models here.
 
@@ -10,12 +11,15 @@ class CustomUser(models.Model):
     def get_project_SP(self, p_id):
         return self.points.filter(project_id=p_id)
 
-    def save_poinst(self, p_id, pnts):
-        p = self.points.filter(project_id=p_id)
-        if p:
-            p.points += pnts
-            p.save()
-        else:
+    def save_points(self, p_id, pnts):
+        try:
+            p = self.story_points.get(project_id=p_id)
+            if p:
+                print("Changing..")
+                p.points += pnts
+                p.save()
+        except:
+            print("Creating...")
             points = PointsProject(user=self, project_id=p_id, points=pnts)
             points.save()
     
@@ -41,7 +45,7 @@ class Task(models.Model):
     name = models.CharField(max_length=30)
     description = models.CharField(max_length=100)
     start_date = models.DateField()
-    finish_date = models.DateField()
+    finish_date = models.DateField(default=("2000-01-01"))
     story_points = models.IntegerField()
     state = models.CharField(max_length=20, choices=CHOICES)#
     estimated_hours = models.FloatField()
@@ -53,9 +57,10 @@ class Task(models.Model):
         else:
             points_per_usr = self.story_points / self.collaborators.count()
         for collaborator in self.collaborators.all():
+            print("hola")
             collaborator.save_points(self.project.id, points_per_usr)
 
 class PointsProject(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='points', null=True)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='story_points', null=True)
     project_id = models.IntegerField()
     points = models.FloatField()

@@ -3,11 +3,12 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import CustomUser, Project, Task
-from .serializers import UserSerializer, ProjectSerializer, TaskSerializer
+from .models import CustomUser, Project, Task, PointsProject
+from .serializers import UserSerializer, ProjectSerializer, TaskSerializer, PointsProjectSerializer
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
+from datetime import date
 
 
 class ProjectsView(APIView):
@@ -93,8 +94,12 @@ class TasksView(APIView):
           serializer = TaskSerializer(instance=task, data=request.data, partial=True)
           if serializer.is_valid():
                tsk = serializer.save()
-               if tsk.state == 'DE':
+               print(tsk.finish_date)
+               if tsk.state == 'DE' and tsk.finish_date == date(2000, 1, 1):
+                    print("Updating...")
                     tsk.update_points()
+                    tsk.finish_date = date.today()
+                    tsk.save()
                return Response(serializer.data, status=status.HTTP_200_OK)
           return Response(serializer.errors, status=status.HTTP_404_BAD_REQUEST)
 
@@ -112,8 +117,17 @@ class TaskCollaboratorsView(APIView):
             return Response({"error": "Task not found"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-     
 
+class ProjectUsersPoints(APIView):
+     def get(self, request, pk, format=None):
+          pj = get_object_or_404(Project, pk=pk)
+          user = CustomUser.objects.get(user=request.user)
+          if (user not in pj.collaborators.all()) and (user not in pj.teachers.all()):
+               return Response({"message": "Can't access if you are not a collaborator or a teacher!"}, status=status.HTTP_400_BAD_REQUEST)
+          points = PointsProject.objects.filter(project_id=pk).all()
+          serializer = PointsProjectSerializer(points, many=True)
+          return Response(serializer.data, status=status.HTTP_200_OK)
+     
 
 #User auth
 class RegisterView(APIView):

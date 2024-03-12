@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Project, Task, CustomUser
+from .models import Project, Task, CustomUser, PointsProject
 from django.contrib.auth.models import User
 
 
@@ -33,3 +33,10 @@ class TaskSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'description','start_date', 'finish_date',
                    'story_points', 'state', 'estimated_hours', 'total_hours',
                    'creator', 'collaborators']
+
+class PointsProjectSerializer(serializers.ModelSerializer):
+    user = CustomUserSerializer(required=False)
+
+    class Meta:
+        model = PointsProject
+        fields = ['user', 'project_id', 'points']
