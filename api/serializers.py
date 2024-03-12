@@ -35,8 +35,8 @@ class TaskSerializer(serializers.ModelSerializer):
                    'creator', 'collaborators']
 
 class PointsProjectSerializer(serializers.ModelSerializer):
-    user = CustomUserSerializer(required=False)
+    username = serializers.CharField(source='user.user.username', read_only=False)
 
     class Meta:
         model = PointsProject
-        fields = ['user', 'project_id', 'points']
+        fields = ['username', 'project_id', 'points']
