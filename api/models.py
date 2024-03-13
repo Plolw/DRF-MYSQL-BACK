@@ -11,7 +11,7 @@ class CustomUser(models.Model):
     def get_project_SP(self, p_id):
         return self.points.filter(project_id=p_id)
 
-    def save_points(self, p_id, pnts):
+    def save_points(self, p_id, pnts): #Guardar puntos de un usuario en un proyecto
         try:
             p = self.story_points.get(project_id=p_id)
             if p:
@@ -32,7 +32,7 @@ class Project(models.Model):
     teachers = models.ManyToManyField(CustomUser, related_name='observed_projects', blank=True)
 
 class Task(models.Model):
-    CHOICES = [
+    CHOICES = [ #Opciones de estado de la tarea
         ('AN', 'Analizando'),
         ('CU', 'En curso'),
         ('RE', 'En review'),
@@ -51,7 +51,7 @@ class Task(models.Model):
     estimated_hours = models.FloatField()
     total_hours = models.FloatField(default=0)
 
-    def update_points(self):
+    def update_points(self): #Actualizar puntos de un proyecto repartiendo los de la tarea utilizada entre sus colaboradores
         if self.collaborators.count() < 1:
             points_per_usr = self.story_points
         else:
@@ -66,7 +66,7 @@ class PointsProject(models.Model):
     points = models.FloatField()
 
 class Invitation(models.Model):
-    CHOICES = [
+    CHOICES = [ #Opciones de estado de la invitación (se guardan abreviados en la base de datos)
         ('AC', 'Accepted'),
         ('WA', 'Waiting'),
         ('DE', 'Denied')
@@ -75,3 +75,4 @@ class Invitation(models.Model):
     sender = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='s_invitations')
     receiver = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='r_invitations')
     state = models.CharField(max_length=20, choices=CHOICES, default='WA')
+    project = models.OneToOneField(Project, on_delete=models.CASCADE, related_name='p_invitations', null=True)

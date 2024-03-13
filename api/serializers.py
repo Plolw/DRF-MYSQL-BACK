@@ -44,7 +44,8 @@ class PointsProjectSerializer(serializers.ModelSerializer):
 class InvitationSerializer(serializers.ModelSerializer):
     sender = CustomUserSerializer(required=False)
     receiver = CustomUserSerializer(required=False)
+    project = ProjectSerializer(required=False)
 
     class Meta:
         model = Invitation
-        field = ['sender', 'receiver', 'state']
+        fields = ['id', 'sender', 'receiver', 'project', 'state']
