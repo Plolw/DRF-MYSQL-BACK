@@ -23,7 +23,6 @@ class CustomUser(models.Model):
             points = PointsProject(user=self, project_id=p_id, points=pnts)
             points.save()
     
-    
 class Project(models.Model):
     creator = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='created_projects', null=True)
     collaborators = models.ManyToManyField(CustomUser, related_name='collaborating_projects', blank=True)
@@ -47,12 +46,12 @@ class Task(models.Model):
     start_date = models.DateField()
     finish_date = models.DateField(default=("2000-01-01"))
     story_points = models.IntegerField()
-    state = models.CharField(max_length=20, choices=CHOICES)#
+    state = models.CharField(max_length=20, choices=CHOICES, default='AN')#
     estimated_hours = models.FloatField()
     total_hours = models.FloatField(default=0)
 
     def update_points(self): #Actualizar puntos de un proyecto repartiendo los de la tarea utilizada entre sus colaboradores
-        if self.collaborators.count() < 1:
+        if self.collaborators.count() < 2:
             points_per_usr = self.story_points
         else:
             points_per_usr = self.story_points / self.collaborators.count()
