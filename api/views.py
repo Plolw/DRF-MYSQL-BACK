@@ -16,7 +16,7 @@ class ProjectsView(APIView):
 
      def get(self, request): #Devuelve todos los proyectos en los que está el usuario que hace la petición 
           user = CustomUser.objects.get(user=request.user)
-          projects = Project.objects.filter(Q(creator=user) | Q(collaborators__in=[user])).all()
+          projects = Project.objects.filter(Q(collaborators__in=[user]) | Q(teachers__in=[user])).all() #CAMBIOS!!!!!!
           serializer = ProjectSerializer(projects, many=True)
           return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -157,7 +157,7 @@ class InvitesView(APIView):
           receiverUser =  get_object_or_404(User, username=request.data['username'])
           receiver = CustomUser.objects.get(user=receiverUser)
           invitation = Invitation(sender=user, receiver=receiver, project=project)
-          invitation.save()
+          invitation.save() #Cambios!!!!!!
           serializer = InvitationSerializer(invitation)
           return Response(serializer.data, status=status.HTTP_201_CREATED)
      
@@ -180,6 +180,7 @@ class InvitesView(APIView):
                               project.collaborators.add(user)
                          project.save()
                          serializer = ProjectSerializer(project)
+                         invitation.delete()
                          return Response({"message": "Invitation accepted succesfully!"}, status=status.HTTP_200_OK)
                     except Project.DoesNotExist:
                          return Response({"error": "Project not found"}, status=status.HTTP_404_NOT_FOUND)
