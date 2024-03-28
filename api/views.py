@@ -16,7 +16,7 @@ class ProjectsView(APIView):
 
      def get(self, request): #Devuelve todos los proyectos en los que está el usuario que hace la petición 
           user = CustomUser.objects.get(user=request.user)
-          projects = Project.objects.filter(Q(collaborators__in=[user]) | Q(teachers__in=[user])).all() #CAMBIOS!!!!!!
+          projects = Project.objects.filter(Q(collaborators__in=[user]) | Q(teachers__in=[user])).distinct() #CAMBIOS!!!!!!
           serializer = ProjectSerializer(projects, many=True)
           return Response(serializer.data, status=status.HTTP_200_OK)
 
