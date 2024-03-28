@@ -71,7 +71,7 @@ class Invitation(models.Model):
         ('DE', 'Denied')
     ]
 
-    sender = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='s_invitations')
-    receiver = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='r_invitations')
+    sender = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='s_invitations')  #CAMBIOS!!!
+    receiver = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='r_invitations') #CAMBIOS!!!
     state = models.CharField(max_length=20, choices=CHOICES, default='WA')
-    project = models.OneToOneField(Project, on_delete=models.CASCADE, related_name='p_invitations', null=True)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='p_invitations', null=True) #CAMBIOS!!!
