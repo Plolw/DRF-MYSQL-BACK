@@ -82,6 +82,7 @@ class TasksView(APIView):
                     task.project = proj
                     task.save()
                     return Response(serializer.data, status=status.HTTP_201_CREATED)
+               
                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
           return Response({"message": "Can't add a task if you are not a collaborator!"}, status=status.HTTP_400_BAD_REQUEST)
      
