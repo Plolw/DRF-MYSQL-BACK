@@ -41,6 +41,8 @@ class Task(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks', null=True)
     creator = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='created_tasks', null=True)
     collaborators = models.ManyToManyField(CustomUser, related_name='collaborating_tasks', blank=True)
+    previous_task = models.ForeignKey('self', on_delete=models.SET_NULL, related_name='next_tasks', null=True, blank=True)
+    next_task = models.ForeignKey('self', on_delete=models.SET_NULL, related_name='previous_tasks', null=True, blank=True)
     name = models.CharField(max_length=30)
     description = models.CharField(max_length=100)
     start_date = models.DateField()
@@ -63,6 +65,7 @@ class PointsProject(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='story_points', null=True)
     project_id = models.IntegerField()
     points = models.FloatField()
+    date = models.DateField(default=("2000-01-01"))
 
 class Invitation(models.Model):
     CHOICES = [ #Opciones de estado de la invitación (se guardan abreviados en la base de datos)

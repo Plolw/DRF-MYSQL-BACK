@@ -65,7 +65,7 @@ class TasksView(APIView):
           user = CustomUser.objects.get(user=request.user)
           if user not in proj.collaborators.all() and user not in proj.teachers.all():
                return Response({"message": "Can't see tasks if you are not a collaborator or a teacher!"}, status=status.HTTP_400_BAD_REQUEST)
-          tasks = Task.objects.filter(project=proj).all()
+          tasks = Task.objects.filter(project=proj, previous_task=None).all()
           serializer = TaskSerializer(tasks, many=True)
           return Response(serializer.data, status=status.HTTP_200_OK)
 

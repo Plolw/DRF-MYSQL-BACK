@@ -39,7 +39,7 @@ class PointsProjectSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PointsProject
-        fields = ['username', 'project_id', 'points']
+        fields = ['username', 'project_id', 'points', 'date']
 
 class InvitationSerializer(serializers.ModelSerializer):
     sender = CustomUserSerializer(required=False)
