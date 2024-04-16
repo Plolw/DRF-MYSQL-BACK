@@ -140,13 +140,24 @@ class NextTasksView(APIView):
      
      def post(self, request, pk):
           parent_task = get_object_or_404(Task, pk=pk)
+          current_task = parent_task
+          while current_task.next_task:
+               current_task = current_task.next_task
           user = CustomUser.objects.get(user=request.user)
           if user not in parent_task.collaborators.all():
                return Response({"error", "Can't create a next task if you are not a task collaborator!"})
           serializer = TaskSerializer(data=request.data)
           if serializer.is_valid():
-               serializer.save()
-               return Response({"message","Succesfull!"}, status=status.HTTP_200_OK)
+               task = serializer.save()
+               current_task.next_task = task
+               current_task.save()
+               task.previous_task = current_task
+               proj = current_task.project
+               user = CustomUser.objects.get(user=request.user)
+               task.creator = user
+               task.project = proj
+               task.save()
+               return Response(serializer.data, status=status.HTTP_201_CREATED)
           return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
           
         
