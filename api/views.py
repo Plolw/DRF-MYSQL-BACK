@@ -125,6 +125,31 @@ class TaskCollaboratorsView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
+class NextTasksView(APIView):
+     permission_classes = (IsAuthenticated, )
+
+     def get(self, request, pk):
+          task = Task.objects.get(pk=pk)
+          next_tasks = []
+          current_task = task
+          while current_task.next_task:
+               next_tasks.append(current_task.next_task)
+               current_task = current_task.next_task
+          serializer = TaskSerializer(next_tasks, many=True)
+          return Response(serializer.data, status=status.HTTP_200_OK)
+     
+     def post(self, request, pk):
+          parent_task = get_object_or_404(Task, pk=pk)
+          user = CustomUser.objects.get(user=request.user)
+          if user not in parent_task.collaborators.all():
+               return Response({"error", "Can't create a next task if you are not a task collaborator!"})
+          serializer = TaskSerializer(data=request.data)
+          if serializer.is_valid():
+               serializer.save()
+               return Response({"message","Succesfull!"}, status=status.HTTP_200_OK)
+          return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+          
+        
 #Points management
 class ProjectUsersPoints(APIView):
      permission_classes = (IsAuthenticated,)
