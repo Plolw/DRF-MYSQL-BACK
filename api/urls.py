@@ -12,5 +12,6 @@ urlpatterns = [
      path('projects/<int:pk>/points/', views.ProjectUsersPoints.as_view(), name='points'),
      path('invitations/<int:pk>/', views.InvitesView.as_view(), name='invitations_put'),
      path('invitations/', views.InvitesView.as_view(), name='invitations'),
-     path('task/<int:pk>/', views.NextTasksView.as_view(), name='next_tasks')
+     path('task/<int:pk>/', views.NextTasksView.as_view(), name='next_tasks'),
+     path('data/<int:projectId>/<str:dt>/', views.DataView.as_view(), name='data')
 ]

@@ -4,11 +4,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import CustomUser, Project, Task, PointsProject, Invitation
-from .serializers import UserSerializer, ProjectSerializer, TaskSerializer, PointsProjectSerializer, InvitationSerializer, CustomUserSerializer
+from .serializers import UserSerializer, ProjectSerializer, TaskSerializer, PointsProjectSerializer, InvitationSerializer, CustomUserSerializer, PointsPerDaySerializer
 from django.contrib.auth.models import User
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404
 from datetime import date
+from django.http import JsonResponse
+from django.utils import timezone
 
 
 class ProjectsView(APIView):
@@ -264,3 +266,31 @@ class UserView(APIView):
           user = CustomUser.objects.get(user=request.user)
           serializer = CustomUserSerializer(user)
           return Response(serializer.data, status=status.HTTP_200_OK)
+     
+#Graphs
+class DataView(APIView):
+     permission_class = (IsAuthenticated,)
+     
+     def get(self, request, projectId=None, dt=None):
+          if not projectId:
+               return Response({"error":"No project id specified."}, status=status.HTTP_400_BAD_REQUEST)
+          project = get_object_or_404(Project, pk=projectId)
+          if dt == 'hu':
+               tasks = Task.objects.filter(project=project, total_hours__gt=0).all()
+               total_hours_per_user = {}
+               for task in tasks:
+                    hours_per_collaborator = task.total_hours / task.collaborators.count()
+                    for collaborator in task.collaborators.all():
+                         total_hours_per_user[collaborator.user.username] = total_hours_per_user.get(collaborator.user.username, 0) + hours_per_collaborator
+               return JsonResponse({'usernames': list(total_hours_per_user.keys()), 'data': list(total_hours_per_user.values())})
+          if dt == 'sd':
+               current_date = timezone.now().date()
+               points_per_day = PointsProject.objects.filter(project_id=projectId, date__lte=current_date).values('date').annotate(total_points=Sum('points'))
+               serializer = PointsPerDaySerializer(points_per_day, many=True)
+               return Response(serializer.data)
+          if dt == 'tu':
+               return JsonResponse()
+          if dt == 'su':
+               return JsonResponse()
+          #No arguments, raise error
+          return Response({"error":"No data argument."}, status=status.HTTP_400_BAD_REQUEST)
