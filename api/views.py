@@ -8,7 +8,7 @@ from .serializers import UserSerializer, ProjectSerializer, TaskSerializer, Poin
 from django.contrib.auth.models import User
 from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404
-from datetime import date
+from datetime import date, timedelta
 from django.http import JsonResponse
 from django.utils import timezone
 
@@ -279,15 +279,27 @@ class DataView(APIView):
                tasks = Task.objects.filter(project=project, total_hours__gt=0).all()
                total_hours_per_user = {}
                for task in tasks:
+                    if task.collaborators.count() < 1:
+                         continue
                     hours_per_collaborator = task.total_hours / task.collaborators.count()
                     for collaborator in task.collaborators.all():
                          total_hours_per_user[collaborator.user.username] = total_hours_per_user.get(collaborator.user.username, 0) + hours_per_collaborator
                return JsonResponse({'usernames': list(total_hours_per_user.keys()), 'data': list(total_hours_per_user.values())})
           if dt == 'sd':
-               current_date = timezone.now().date()
-               points_per_day = PointsProject.objects.filter(project_id=projectId, date__lte=current_date).values('date').annotate(total_points=Sum('points'))
-               serializer = PointsPerDaySerializer(points_per_day, many=True)
-               return Response(serializer.data)
+               points = PointsProject.objects.filter(project_id=projectId).all()
+               max_date = date(2000, 1, 1)
+               min_date = timezone.now().date()
+               points_per_day = {}
+               for point in points:
+                    max_date = max(max_date, point.date)
+                    min_date = min(min_date, point.date)
+               while min_date <= max_date:
+                    points_per_day[min_date] = 0
+                    min_date = min_date + timedelta(days=1)
+               for point in points:
+                    points_per_day[point.date] = points_per_day.get(point.date, 0) + point.points
+                    print(points_per_day[point.date])
+               return JsonResponse({"dates": list(points_per_day.keys()), "data": list(points_per_day.values())})
           if dt == 'tu':
                return JsonResponse()
           if dt == 'su':

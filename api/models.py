@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 
 # Create your models here.
 
@@ -12,16 +13,8 @@ class CustomUser(models.Model):
         return self.points.filter(project_id=p_id)
 
     def save_points(self, p_id, pnts): #Guardar puntos de un usuario en un proyecto
-        try:
-            p = self.story_points.get(project_id=p_id)
-            if p:
-                print("Changing..")
-                p.points += pnts
-                p.save()
-        except:
-            print("Creating...")
-            points = PointsProject(user=self, project_id=p_id, points=pnts)
-            points.save()
+        points = PointsProject(user=self, project_id=p_id, points=pnts, date=timezone.now().date())
+        points.save()
     
 class Project(models.Model):
     creator = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='created_projects', null=True)
