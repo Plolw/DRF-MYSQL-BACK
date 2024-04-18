@@ -172,9 +172,15 @@ class ProjectUsersPoints(APIView):
           user = CustomUser.objects.get(user=request.user)
           if (user not in pj.collaborators.all()) and (user not in pj.teachers.all()):
                return Response({"message": "Can't access if you are not a collaborator or a teacher!"}, status=status.HTTP_400_BAD_REQUEST)
-          points = PointsProject.objects.filter(project_id=pk).all()
-          serializer = PointsProjectSerializer(points, many=True)
-          return Response(serializer.data, status=status.HTTP_200_OK)
+          points_per_user = PointsProject.objects.filter(project_id=pk).values('user__user__username').annotate(total_points=Sum('points'))
+          data = [
+            {
+                'username': point['user__user__username'],
+                'total_points': point['total_points']
+            }
+            for point in points_per_user
+        ]
+          return Response(data, status=status.HTTP_200_OK)
      
 #Invites
 class InvitesView(APIView):
