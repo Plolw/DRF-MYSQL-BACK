@@ -49,7 +49,3 @@ class InvitationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Invitation
         fields = ['id', 'sender', 'receiver', 'project', 'state']
-
-class PointsPerDaySerializer(serializers.Serializer):
-    date = serializers.DateField()
-    total_points = serializers.FloatField()

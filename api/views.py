@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import CustomUser, Project, Task, PointsProject, Invitation
-from .serializers import UserSerializer, ProjectSerializer, TaskSerializer, PointsProjectSerializer, InvitationSerializer, CustomUserSerializer, PointsPerDaySerializer
+from .serializers import UserSerializer, ProjectSerializer, TaskSerializer, PointsProjectSerializer, InvitationSerializer, CustomUserSerializer
 from django.contrib.auth.models import User
 from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404
@@ -97,6 +97,8 @@ class TasksView(APIView):
           if serializer.is_valid():
                tsk = serializer.save()
                if tsk.state == 'DE' and tsk.finish_date == date(2000, 1, 1): #Si la modificación establece el estado de la tarea como "Deployed" suma los story points de dicha tarea a los colaboradores
+                    if tsk.collaborators.count() < 1:
+                         return Response({"error": "Cannot finish a task if it doesn't have collaborators"}, status=status.HTTP_400_BAD_REQUEST)
                     tsk.update_points()
                     tsk.finish_date = date.today() #Además establece la fehca de finalización de la tarea en el dia que se haga la petición
                     tsk.save()
@@ -307,8 +309,20 @@ class DataView(APIView):
                     print(points_per_day[point.date])
                return JsonResponse({"dates": list(points_per_day.keys()), "data": list(points_per_day.values())})
           if dt == 'tu':
-               return JsonResponse()
-          if dt == 'su':
-               return JsonResponse()
+               tasks = Task.objects.filter(project=project).all()
+               total_estimated_hours = 0
+               percentage_per_user = {}
+               for task in tasks:
+                    if task.total_hours != 0:
+                         total_estimated_hours += task.total_hours
+                    else:
+                         total_estimated_hours += task.estimated_hours
+               for task in tasks:
+                    c = task.collaborators.count()
+                    if task.collaborators.count() < 1 : c = 1
+                    hours_per_user = task.total_hours / c
+                    for collaborator in task.collaborators.all():
+                         percentage_per_user[collaborator.user.username] = percentage_per_user.get(collaborator.user.username, 0) + ((hours_per_user / total_estimated_hours) * 100)
+               return JsonResponse({"usernames": list(percentage_per_user.keys()), "data": list(percentage_per_user.values()), "total_hours": total_estimated_hours})
           #No arguments, raise error
           return Response({"error":"No data argument."}, status=status.HTTP_400_BAD_REQUEST)
