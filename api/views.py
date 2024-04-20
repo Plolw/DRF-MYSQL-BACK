@@ -149,7 +149,7 @@ class NextTasksView(APIView):
                current_task = current_task.next_task
           user = CustomUser.objects.get(user=request.user)
           if user not in parent_task.collaborators.all():
-               return Response({"error", "Can't create a next task if you are not a task collaborator!"})
+               return Response({"error", "Can't create a next task if you are not a task collaborator!"}, status=status.HTTP_400_BAD_REQUEST)
           serializer = TaskSerializer(data=request.data)
           if serializer.is_valid():
                task = serializer.save()
@@ -325,6 +325,6 @@ class DataView(APIView):
                          percentage_per_user[collaborator.user.username] = percentage_per_user.get(collaborator.user.username, 0) + ((hours_per_user / total_estimated_hours) * 100)
                          hours_left -= (hours_per_user / total_estimated_hours) * 100
                percentage_per_user["hours_left"] = hours_left
-               return JsonResponse({"usernames": list(percentage_per_user.keys()), "data": list(percentage_per_user.values()), "total_hours": total_estimated_hours})
+               return JsonResponse({"usernames": list(percentage_per_user.keys()), "data": list(percentage_per_user.values())})
           #No arguments, raise error
           return Response({"error":"No data argument."}, status=status.HTTP_400_BAD_REQUEST)
