@@ -51,7 +51,6 @@ class Task(models.Model):
         else:
             points_per_usr = self.story_points / self.collaborators.count()
         for collaborator in self.collaborators.all():
-            print("hola")
             collaborator.save_points(self.project.id, points_per_usr)
 
 class PointsProject(models.Model):

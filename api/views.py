@@ -175,13 +175,12 @@ class ProjectUsersPoints(APIView):
           if (user not in pj.collaborators.all()) and (user not in pj.teachers.all()):
                return Response({"message": "Can't access if you are not a collaborator or a teacher!"}, status=status.HTTP_400_BAD_REQUEST)
           points_per_user = PointsProject.objects.filter(project_id=pk).values('user__user__username').annotate(total_points=Sum('points'))
-          data = [
-            {
-                'username': point['user__user__username'],
-                'total_points': point['total_points']
-            }
-            for point in points_per_user
-        ]
+          usernames = [point['user__user__username'] for point in points_per_user]
+          total_points = [point['total_points'] for point in points_per_user]
+          data = {
+            'usernames': usernames,
+            'total_points': total_points
+          }
           return Response(data, status=status.HTTP_200_OK)
      
 #Invites
@@ -317,12 +316,15 @@ class DataView(APIView):
                          total_estimated_hours += task.total_hours
                     else:
                          total_estimated_hours += task.estimated_hours
+               hours_left = 100
                for task in tasks:
                     c = task.collaborators.count()
                     if task.collaborators.count() < 1 : c = 1
                     hours_per_user = task.total_hours / c
                     for collaborator in task.collaborators.all():
                          percentage_per_user[collaborator.user.username] = percentage_per_user.get(collaborator.user.username, 0) + ((hours_per_user / total_estimated_hours) * 100)
+                         hours_left -= (hours_per_user / total_estimated_hours) * 100
+               percentage_per_user["hours_left"] = hours_left
                return JsonResponse({"usernames": list(percentage_per_user.keys()), "data": list(percentage_per_user.values()), "total_hours": total_estimated_hours})
           #No arguments, raise error
           return Response({"error":"No data argument."}, status=status.HTTP_400_BAD_REQUEST)
