@@ -92,13 +92,21 @@ class TasksView(APIView):
           task = get_object_or_404(Task, pk=pk)
           user = CustomUser.objects.get(user=request.user)
           if user not in task.project.collaborators.all():
-               return Response({"message": "Can't change a task if you are not a collaborator!"}, status=status.HTTP_400_BAD_REQUEST)
+               return Response({"error": "Can't change a task if you are not a collaborator!"}, status=status.HTTP_400_BAD_REQUEST)
           serializer = TaskSerializer(instance=task, data=request.data, partial=True)
+          if request.data["state"] and request.data["state"] == 'DE':
+               if task.collaborators.count() < 1:
+                         print("No collabs")
+                         return Response({"error": "2"}, status=status.HTTP_400_BAD_REQUEST)
+               current_task = task
+               while current_task.previous_task:
+                    if current_task.state != 'DE':
+                         return Response({"error": "1"}, status=status.HTTP_400_BAD_REQUEST)
+                    
           if serializer.is_valid():
                tsk = serializer.save()
                if tsk.state == 'DE' and tsk.finish_date == date(2000, 1, 1): #Si la modificación establece el estado de la tarea como "Deployed" suma los story points de dicha tarea a los colaboradores
-                    if tsk.collaborators.count() < 1:
-                         return Response({"error": "Cannot finish a task if it doesn't have collaborators"}, status=status.HTTP_400_BAD_REQUEST)
+                    current_task = task.previous_task
                     tsk.update_points()
                     tsk.finish_date = date.today() #Además establece la fehca de finalización de la tarea en el dia que se haga la petición
                     tsk.save()
@@ -148,8 +156,6 @@ class NextTasksView(APIView):
           while current_task.next_task:
                current_task = current_task.next_task
           user = CustomUser.objects.get(user=request.user)
-          if user not in parent_task.collaborators.all():
-               return Response({"error", "Can't create a next task if you are not a task collaborator!"}, status=status.HTTP_400_BAD_REQUEST)
           serializer = TaskSerializer(data=request.data)
           if serializer.is_valid():
                task = serializer.save()
