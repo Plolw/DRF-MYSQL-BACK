@@ -288,6 +288,9 @@ class DataView(APIView):
           if not projectId:
                return Response({"error":"No project id specified."}, status=status.HTTP_400_BAD_REQUEST)
           project = get_object_or_404(Project, pk=projectId)
+          user = CustomUser.objects.get(user=request.user)
+          if user not in project.teachers:
+               return Response({"error":"Can't request data if you are not a teacher."}, status=status.HTTP_400_BAD_REQUEST)
           if dt == 'hu':
                tasks = Task.objects.filter(project=project, total_hours__gt=0).all()
                total_hours_per_user = {}
