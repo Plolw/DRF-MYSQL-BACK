@@ -100,8 +100,9 @@ class TasksView(APIView):
                          return Response({"error": "2"}, status=status.HTTP_400_BAD_REQUEST)
                current_task = task
                while current_task.previous_task:
-                    if current_task.state != 'DE':
+                    if current_task.previous_task.state != 'DE':
                          return Response({"error": "1"}, status=status.HTTP_400_BAD_REQUEST)
+                    current_task = current_task.previous_task
                     
           if serializer.is_valid():
                tsk = serializer.save()
@@ -289,7 +290,7 @@ class DataView(APIView):
                return Response({"error":"No project id specified."}, status=status.HTTP_400_BAD_REQUEST)
           project = get_object_or_404(Project, pk=projectId)
           user = CustomUser.objects.get(user=request.user)
-          if user not in project.teachers:
+          if user not in project.teachers.all() and user not in project.collaborators.all():
                return Response({"error":"Can't request data if you are not a teacher."}, status=status.HTTP_400_BAD_REQUEST)
           if dt == 'hu':
                tasks = Task.objects.filter(project=project, total_hours__gt=0).all()
