@@ -11,6 +11,7 @@ from django.shortcuts import get_object_or_404
 from datetime import date, timedelta
 from django.http import JsonResponse
 from django.utils import timezone
+from datetime import datetime, timedelta
 
 
 class ProjectsView(APIView):
@@ -351,9 +352,11 @@ class DataView(APIView):
                tasks = Task.objects.filter(project=project, previous_task=None).all()
                taskrels = []
                max_date = date(2000, 1, 1)
+               min_date = timezone.now().date()
                for task in tasks:
                     newTask = []
                     max_date = max([max_date, task.finish_date, task.start_date])
+                    min_date = min([min_date, task.start_date])
                     if task.finish_date == date(2000, 1, 1):
                          dat = task.start_date
                     else:
@@ -361,6 +364,7 @@ class DataView(APIView):
                     newTask.append({"name": task.name, "start_date": task.start_date, "finish_date": dat})
                     while task.next_task:
                          max_date = max([max_date, task.next_task.finish_date, task.next_task.start_date])
+                         min_date = min([min_date, task.next_task.start_date])
                          if task.finish_date == date(2000, 1, 1):
                               dat = task.next_task.start_date
                          else:
@@ -368,9 +372,25 @@ class DataView(APIView):
                          newTask.append({"name": task.next_task.name, "start_date": task.next_task.start_date, "finish_date": dat})
                          task = task.next_task
                     taskrels.append(newTask)
-               return JsonResponse({"max_date": max_date, "tasks": list(taskrels)})
+               for tasklist in taskrels:
+                    for task in tasklist:
+                         task[""]
+               return JsonResponse({"max_date": max_date, "min_date": min_date, "tasks": list(taskrels)})
                
                
 
           #No arguments, raise error
           return Response({"error":"No data argument."}, status=status.HTTP_400_BAD_REQUEST)
+     
+def date_range(start_date, end_date):
+    # Convert string dates to datetime objects
+    start_date = datetime.strptime(start_date, '%Y-%m-%d')
+    end_date = datetime.strptime(end_date, '%Y-%m-%d')
+    
+    # Calculate the number of days between the two dates
+    delta = end_date - start_date
+    
+    # Generate the array of dates
+    date_list = [start_date + timedelta(days=i) for i in range(delta.days + 1)]
+    
+    return date_list
