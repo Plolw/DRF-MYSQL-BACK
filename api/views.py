@@ -336,5 +336,41 @@ class DataView(APIView):
                          hours_left -= (hours_per_user / total_estimated_hours) * 100
                percentage_per_user["hours_left"] = hours_left
                return JsonResponse({"usernames": list(percentage_per_user.keys()), "data": list(percentage_per_user.values())})
+          
+          if dt == 'th':
+               tasks = Task.objects.filter(project=project).all()
+               time_per_task = {}
+               for task in tasks:
+                    if task.total_hours != 0:
+                         time_per_task[task.name] = task.total_hours
+                    else:
+                         time_per_task[task.name] = task.estimated_hours
+               return JsonResponse({"names": list(time_per_task.keys()), "hours": list(time_per_task.values())})
+          
+          if dt == 'gantt':
+               tasks = Task.objects.filter(project=project, previous_task=None).all()
+               taskrels = []
+               max_date = date(2000, 1, 1)
+               for task in tasks:
+                    newTask = []
+                    max_date = max([max_date, task.finish_date, task.start_date])
+                    if task.finish_date == date(2000, 1, 1):
+                         dat = task.start_date
+                    else:
+                         dat = task.finish_date
+                    newTask.append({"name": task.name, "start_date": task.start_date, "finish_date": dat})
+                    while task.next_task:
+                         max_date = max([max_date, task.next_task.finish_date, task.next_task.start_date])
+                         if task.finish_date == date(2000, 1, 1):
+                              dat = task.next_task.start_date
+                         else:
+                              dat = task.next_task.finish_date
+                         newTask.append({"name": task.next_task.name, "start_date": task.next_task.start_date, "finish_date": dat})
+                         task = task.next_task
+                    taskrels.append(newTask)
+               return JsonResponse({"max_date": max_date, "tasks": list(taskrels)})
+               
+               
+
           #No arguments, raise error
           return Response({"error":"No data argument."}, status=status.HTTP_400_BAD_REQUEST)
