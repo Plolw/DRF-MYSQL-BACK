@@ -8,10 +8,9 @@ from .serializers import UserSerializer, ProjectSerializer, TaskSerializer, Poin
 from django.contrib.auth.models import User
 from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from django.http import JsonResponse
 from django.utils import timezone
-from datetime import datetime, timedelta
 
 
 class ProjectsView(APIView):
@@ -111,6 +110,8 @@ class TasksView(APIView):
                     current_task = task.previous_task
                     tsk.update_points()
                     tsk.finish_date = date.today() #Además establece la fehca de finalización de la tarea en el dia que se haga la petición
+                    if tsk.finish_date < tsk.start_date:
+                         tsk.start_date = tsk.finish_date
                     tsk.save()
                return Response(serializer.data, status=status.HTTP_200_OK)
           return Response(serializer.errors, status=status.HTTP_404_BAD_REQUEST)
@@ -365,16 +366,23 @@ class DataView(APIView):
                     while task.next_task:
                          max_date = max([max_date, task.next_task.finish_date, task.next_task.start_date])
                          min_date = min([min_date, task.next_task.start_date])
-                         if task.finish_date == date(2000, 1, 1):
+                         if task.next_task.finish_date == date(2000, 1, 1):
                               dat = task.next_task.start_date
                          else:
                               dat = task.next_task.finish_date
                          newTask.append({"name": task.next_task.name, "start_date": task.next_task.start_date, "finish_date": dat})
                          task = task.next_task
                     taskrels.append(newTask)
+               zerolist = date_range(min_date, max_date)
+               print(f"Range of dates: {len(zerolist)}")
                for tasklist in taskrels:
                     for task in tasklist:
-                         task[""]
+                         l1 = zerolist.copy()
+                         print(task["name"])
+                         print(task["start_date"])
+                         print(task["finish_date"])
+                         l1 = update_list(l1, min_date, task["start_date"], task["finish_date"])
+                         task["position_list"] = l1
                return JsonResponse({"max_date": max_date, "min_date": min_date, "tasks": list(taskrels)})
                
                
@@ -383,14 +391,19 @@ class DataView(APIView):
           return Response({"error":"No data argument."}, status=status.HTTP_400_BAD_REQUEST)
      
 def date_range(start_date, end_date):
-    # Convert string dates to datetime objects
-    start_date = datetime.strptime(start_date, '%Y-%m-%d')
-    end_date = datetime.strptime(end_date, '%Y-%m-%d')
-    
-    # Calculate the number of days between the two dates
-    delta = end_date - start_date
-    
-    # Generate the array of dates
-    date_list = [start_date + timedelta(days=i) for i in range(delta.days + 1)]
-    
-    return date_list
+     delta = (end_date - start_date).days + 1
+     list = [0]*delta
+     return list
+
+def update_list(list, start_date, d0, d1):
+     pos0 = (d0 - start_date).days
+     pos1 = (d1 - start_date).days
+     """ print(f"Position 0: {pos0}")
+     print(f"Position 1: {pos1}")
+     print(f"List length: {len(list)}") """
+     if 0 <= pos0 <= pos1 < len(list):
+          for i in range(pos0, pos1 + 1):
+               list[i] = 1
+     else:
+          raise ValueError("Given date is out of range")
+     return list
